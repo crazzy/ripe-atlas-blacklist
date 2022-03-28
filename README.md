@@ -1,6 +1,6 @@
-# RIPE Atlas Blacklist
+# RIPE Atlas Exclusion list 
 
-This is a blacklist of RIPE Atlas probes that using the conditions laid out by me gives undesirable results, most importantly having their DNS queries hijacked, but I also check the official status of the probes and if the probes consistently times out in which case they'll also get added to the blacklist.
+This is a exclusion list of RIPE Atlas probes that using the conditions laid out by me gives undesirable results, most importantly having their DNS queries hijacked, but I also check the official status of the probes and if the probes consistently times out in which case they'll also get added to the exclusion list.
 
 There is support for adding entire countries to the list as well, but I have no intentions of adding any country to the list published here.
 

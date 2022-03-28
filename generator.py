@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timedelta
 from ripe.atlas.cousteau import ProbeRequest, AtlasResultsRequest
 
+output_filename = "data.json"
+
 # Implemented mostly for testing purposes,
 # but it is better to identify the individual probes.
 country_filter = [
@@ -49,16 +51,16 @@ manual_dnshijack = [
 
 
 def handle_api_response(probes, reason):
-    global blacklist
+    global output
     for p in probes:
-        blacklist.append({'id': p['id'], 'reason': reason})
+        output.append({'id': p['id'], 'reason': reason})
 
 
 if __name__ == '__main__':
     # Handle the lists configured above
-    blacklist = []
+    output = []
     for i in manual_dnshijack:
-        blacklist.append({'id': i, 'reason': 'dnshijack'})
+        output.append({'id': i, 'reason': 'dnshijack'})
     for cc in country_filter:
         filters = {"country_code": cc}
         probes = ProbeRequest(**filters)
@@ -102,13 +104,13 @@ if __name__ == '__main__':
             # Something responded, but it didn't answer the query which the actual
             # target of the measurement is well known to do, hence query was likely
             # hijacked by something on the network of the probe.
-            blacklist.append({'id': r['prb_id'], 'reason': 'dnshijack'})
+            output.append({'id': r['prb_id'], 'reason': 'dnshijack'})
         elif 'result' in r and r['result']['ANCOUNT'] > 0 and 'answers' not in r['result']:
             # Something responded, claimed to provide an answer by non-zero ANCOUNT
             # but there was actually nothing in the answer section, so the query
             # could be hijacked. There are of course other reasons for this, but in
             # this case, I care about reliable probes so gonna assume hijack.
-            blacklist.append({'id': r['prb_id'], 'reason': 'dnshijack'})
+            output.append({'id': r['prb_id'], 'reason': 'dnshijack'})
         elif 'result' not in r:
             # The measurement failed entirely on this probe, which is strange as
             # the target is very well-connected as it's anycasted from many
@@ -117,14 +119,14 @@ if __name__ == '__main__':
             # for example. But we would also see it if there's temporary issues
             # of some kind. We can't really be sure about anything here. So we'll
             # build a list of probes timing out, but only add them to the
-            # blacklist if they've timed out previously.
+            # exclusion list if they've timed out previously.
             timed_out_now.append(r['prb_id'])
             if str(r['prb_id']) in timed_out_before:
-                blacklist.append({'id': r['prb_id'], 'reason': 'timeout'})
+                output.append({'id': r['prb_id'], 'reason': 'timeout'})
     with open("timed-out.txt", "w") as f:
         for line in timed_out_now:
             f.write("{}\n".format(line))
 
     # Output
-    with open("blacklist.json", "w") as f:
-        json.dump(blacklist, f, indent=4, sort_keys=True)
+    with open(output_filename, "w") as f:
+        json.dump(output, f, indent=4, sort_keys=True)
